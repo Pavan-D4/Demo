@@ -19,21 +19,28 @@ pipeline {
 
         stage('Build Application') {
             steps {
-                sh 'mvn clean package'
-            }
-        }
-
-        stage('Push Artifacts to Git') {
-            steps {
                 script {
-                    sh '''
-                        git add .
-                        git diff-index --quiet HEAD || git commit -m "Pushed build artifacts from Jenkins"
-                        git push origin main || true
-                    '''
+                    def mvnHome = tool 'maven' // Use the name from Global Tool Configuration
+                    sh "${mvnHome}/bin/mvn clean package"
                 }
             }
         }
+        
+        stage('Push Artifacts to Git') {
+    steps {
+        script {
+            withCredentials([usernamePassword(credentialsId: 'git-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                sh """
+                    git config user.name "${GIT_USER}"
+                    git config user.email "youremail@example.com"
+                    git add .
+                    git commit -m "Pushed build artifacts from Jenkins" || true
+                    git push https://${GIT_USER}:${GIT_PASS}@github.com/Pavan-D4/spring-app.git main || true
+                """
+            }
+        }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
@@ -53,11 +60,11 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                sshagent(['ssh-server-credentials']) {
+                sshagent(['docker']) {
                     sh '''
-                        ssh user@remote-server "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}"
-                        ssh user@remote-server "docker stop welcome-home-container || true && docker rm welcome-home-container || true"
-                        ssh user@remote-server "docker run -d -p 8080:8080 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker stop welcome-home-container || true && docker rm welcome-home-container || true"
+                        ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker run -it -d --rm -p 3000:3000 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     '''
                 }
             }
