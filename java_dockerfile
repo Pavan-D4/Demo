@@ -64,7 +64,7 @@ pipeline {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}"
                         ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker stop welcome-home-container || true && docker rm welcome-home-container || true"
-                        ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker run -it -d --rm -p 3000:3000 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        ssh -o StrictHostKeyChecking=no ubuntu@172.31.14.115 "docker run -it -d --rm -p 8080:8080 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     '''
                 }
             }
