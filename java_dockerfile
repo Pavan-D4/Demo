@@ -67,20 +67,20 @@ pipeline {
         }
 
         stage('Deploy Application') {
-            steps {
-                sshagent(['docker']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ${ssh_USER}@${SSH_DOCKERSYS_IP} <<EOF
-                        docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        docker stop welcome-home-container || true
-                        docker rm welcome-home-container || true
-                        docker run -it -d --rm -p 8080:8080 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        EOF
-                    '''
-                }
-            }
+    steps {
+        sshagent(['docker']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ${ssh_USER}@${SSH_DOCKERSYS_IP} << 'EOF'
+                docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
+                docker stop welcome-home-container || true
+                docker rm welcome-home-container || true
+                docker run -it -d -p 8080:8080 --name welcome-home-container ${DOCKER_IMAGE}:${DOCKER_TAG}
+                EOF
+            '''
         }
     }
+}
+
 
     post {
         always {
